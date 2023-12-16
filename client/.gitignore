@@ -20,6 +20,7 @@
 
 # folders
 yedek
+.idea
 
 # files
 InstagramDb.db
