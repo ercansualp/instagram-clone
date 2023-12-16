@@ -1,0 +1,101 @@
+-- --------------------------------------------------------
+-- Sunucu:                       127.0.0.1
+-- Sunucu sürümü:                10.4.28-MariaDB - mariadb.org binary distribution
+-- Sunucu İşletim Sistemi:       Win64
+-- HeidiSQL Sürüm:               12.6.0.6765
+-- --------------------------------------------------------
+
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET NAMES utf8 */;
+/*!50503 SET NAMES utf8mb4 */;
+/*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
+/*!40103 SET TIME_ZONE='+00:00' */;
+/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
+/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
+/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
+
+
+-- instagram-clone için veritabanı yapısı dökülüyor
+DROP DATABASE IF EXISTS `instagram-clone`;
+CREATE DATABASE IF NOT EXISTS `instagram-clone` /*!40100 DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci */;
+USE `instagram-clone`;
+
+-- tablo yapısı dökülüyor instagram-clone.comment_likes
+DROP TABLE IF EXISTS `comment_likes`;
+CREATE TABLE IF NOT EXISTS `comment_likes` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `comment_id` int(11) NOT NULL,
+  `like_author` text NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=137 DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
+
+-- Veri çıktısı seçilmemişti
+
+-- tablo yapısı dökülüyor instagram-clone.posts
+DROP TABLE IF EXISTS `posts`;
+CREATE TABLE IF NOT EXISTS `posts` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `url` text NOT NULL,
+  `post_key` text NOT NULL,
+  `uid` text NOT NULL,
+  `description` text DEFAULT NULL,
+  `post_like_count_visibility` tinyint(1) DEFAULT 1,
+  `post_comments_visibility` tinyint(1) DEFAULT 1,
+  `adding_date` datetime NOT NULL DEFAULT current_timestamp(),
+  `updated_date` datetime DEFAULT NULL ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=69 DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
+
+-- Veri çıktısı seçilmemişti
+
+-- tablo yapısı dökülüyor instagram-clone.post_comments
+DROP TABLE IF EXISTS `post_comments`;
+CREATE TABLE IF NOT EXISTS `post_comments` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `post_id` int(11) NOT NULL,
+  `comment` text NOT NULL,
+  `comment_author` text NOT NULL,
+  `adding_date` datetime NOT NULL DEFAULT current_timestamp(),
+  `updated_date` datetime DEFAULT NULL ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=180 DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
+
+-- Veri çıktısı seçilmemişti
+
+-- tablo yapısı dökülüyor instagram-clone.post_likes
+DROP TABLE IF EXISTS `post_likes`;
+CREATE TABLE IF NOT EXISTS `post_likes` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `post_id` int(11) NOT NULL,
+  `like_author` varchar(256) NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=55 DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
+
+-- Veri çıktısı seçilmemişti
+
+-- tablo yapısı dökülüyor instagram-clone.users
+DROP TABLE IF EXISTS `users`;
+CREATE TABLE IF NOT EXISTS `users` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `uid` text NOT NULL,
+  `username` text NOT NULL,
+  `email` text NOT NULL,
+  `password` text NOT NULL,
+  `name` text NOT NULL,
+  `gender` tinyint(1) NOT NULL DEFAULT 0,
+  `birthdate` date DEFAULT NULL,
+  `biography` text DEFAULT NULL,
+  `picture` text DEFAULT NULL,
+  `private` tinyint(1) NOT NULL DEFAULT 0,
+  `adding_date` datetime NOT NULL DEFAULT current_timestamp(),
+  `updated_date` datetime DEFAULT NULL ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=42 DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
+
+-- Veri çıktısı seçilmemişti
+
+/*!40103 SET TIME_ZONE=IFNULL(@OLD_TIME_ZONE, 'system') */;
+/*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;
+/*!40014 SET FOREIGN_KEY_CHECKS=IFNULL(@OLD_FOREIGN_KEY_CHECKS, 1) */;
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+/*!40111 SET SQL_NOTES=IFNULL(@OLD_SQL_NOTES, 1) */;
