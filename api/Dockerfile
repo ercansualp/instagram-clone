@@ -5,7 +5,7 @@ FROM php:7.4-apache
 WORKDIR /var/www/html
  
 # Copy the current directory contents into the container at /var/www/html
-COPY api/ .
+COPY . .
  
 # Install any needed packages specified in requirements.txt
 # For example, if you have a `composer.json` file, uncomment the next line
