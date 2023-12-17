@@ -7,7 +7,7 @@ class DbManager
     public function __construct()
     {
         try {
-            $this->conn = new PDO("mysql:host=localhost;dbname=instagram-clone", "root", "");
+            $this->conn = new PDO("mysql:host=13.50.130.221;dbname=instagram-clone", "root", "root");
         } catch (PDOException $e) {
             print $e->getMessage();
         }
