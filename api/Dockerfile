@@ -16,7 +16,7 @@ RUN docker-php-ext-install pdo pdo_mysql
  
 # Copy the current directory contents into the container at /var/www/html
 
-COPY api/ .
+COPY . /var/www/html/api/
  
 # Make port 80 available to the world outside this container
 
