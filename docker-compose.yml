@@ -5,7 +5,7 @@ services:
     build:
       context: ./api
     ports:
-      - "8080:80"  # Adjust the port as needed
+      - "8080:80"
     depends_on:
       - mysql
  
@@ -13,9 +13,17 @@ services:
     build:
       context: ./mysql
     ports:
-      - "3306:3306"  # Adjust the port as needed
+      - "3306:3306"
     environment:
-      MYSQL_ROOT_PASSWORD: root  # Set your desired MySQL root password
-      MYSQL_DATABASE: instagram-clone  # Set your desired MySQL database name
-      MYSQL_USER: root  # Set your desired MySQL user
-      MYSQL_PASSWORD:  # Set your desired MySQL password
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: instagram-clone
+      MYSQL_USER: root
+      MYSQL_PASSWORD: 
+ 
+  frontend:
+    build:
+      context: ./frontend
+    ports:
+      - "3000:3000"  # Adjust the port as needed
+    depends_on:
+      - api
