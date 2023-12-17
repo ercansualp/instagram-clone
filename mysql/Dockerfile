@@ -3,7 +3,7 @@ FROM mysql:latest
  
 # Set the root password and create a database
 ENV MYSQL_ROOT_PASSWORD=root
-ENV MYSQL_DATABASE=root
+ENV MYSQL_DATABASE=instagram-clone
  
 # Optionally, create a non-root user and grant privileges
 ENV MYSQL_USER=root
