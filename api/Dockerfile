@@ -16,7 +16,7 @@ COPY . .
 EXPOSE 80
  
 # Define environment variable
-ENV APACHE_DOCUMENT_ROOT /var/www/html/public
+ENV APACHE_DOCUMENT_ROOT /var/www/html/api
  
 # Enable mod_rewrite
 RUN a2enmod rewrite
