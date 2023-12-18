@@ -13,11 +13,15 @@ const SettingsContainer = styled2.div`
   width: 332px;
   border-right: 1px solid #ddd;
 
-  > span {
-    font-size: 20px;
-    font-weight: 700;
-    margin-bottom: 24px;
-    margin-left: 16px;
+  > div {
+    position: fixed;
+      > span {
+        font-size: 20px;
+        font-weight: 700;
+        margin-left: 16px;
+        display: block;
+        margin-bottom: 24px;
+      }
   }
 `
 
@@ -39,24 +43,26 @@ export default function Edit() {
     return (
         <Container>
             <SettingsContainer>
-                <span>Ayarlar</span>
-                <SettingsItem
-                    style={{
-                        backgroundColor: menu === 0 && "#E3E3E3"
-                    }}
-                    onClick={() => setMenu(0)}
-                >
-                    Profili düzenle
-                </SettingsItem>
+                <div>
+                    <span>Ayarlar</span>
+                    <SettingsItem
+                        style={{
+                            backgroundColor: menu === 0 && "#E3E3E3"
+                        }}
+                        onClick={() => setMenu(0)}
+                    >
+                        Profili düzenle
+                    </SettingsItem>
 
-                <SettingsItem
-                    style={{
-                        backgroundColor: menu === 1 && "#E3E3E3"
-                    }}
-                    onClick={() => setMenu(1)}
-                >
-                    Şifreyi Değiştir
-                </SettingsItem>
+                    <SettingsItem
+                        style={{
+                            backgroundColor: menu === 1 && "#E3E3E3"
+                        }}
+                        onClick={() => setMenu(1)}
+                    >
+                        Şifreyi Değiştir
+                    </SettingsItem>
+                </div>
             </SettingsContainer>
 
             {

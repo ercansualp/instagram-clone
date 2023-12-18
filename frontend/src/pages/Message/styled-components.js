@@ -116,6 +116,7 @@ export const SelectedContact = styled.div`
   height: 100%;
   display: flex;
   flex-direction: column;
+  position: relative;
 
   > div#selected-contact-info {
     display: flex;
@@ -150,6 +151,12 @@ export const ContactMessageContainer = styled.div`
   overflow-y: auto;
   display: flex;
   flex-direction: column;
+
+  > aside {
+    position: absolute !important;
+    bottom: 62px;
+    left: 16px;
+  }
 
   > div#header {
     min-height: 284px;
@@ -207,17 +214,25 @@ export const ContactMessageContainer = styled.div`
     flex-direction: column;
 
     @keyframes typing {
-      0.0000%, 25% { content: ""; }
-      25%, 50% { content: "•"; }
-      50%, 75% { content: "••"; }
-      75%, 100% { content: "•••"; }
+      0.0000%, 25% {
+        content: "";
+      }
+      25%, 50% {
+        content: "•";
+      }
+      50%, 75% {
+        content: "••";
+      }
+      75%, 100% {
+        content: "•••";
+      }
     }
-    
+
     > #typing-container {
       > span {
         height: 34px;
       }
-      
+
       > span::before {
         content: "";
         animation: typing 5s infinite;
@@ -270,27 +285,94 @@ export const SendMessageContainer = styled.div`
   min-height: 78px;
   height: 78px;
   padding: 16px;
+  position: relative;
   
   > div {
     height: 100%;
     position: relative;
     
+    > button {
+      line-height: 46px;
+      position: absolute;
+    }
+    
+    > #send-heart {
+      color: red;
+      font-size: 14px;
+      right: 16px;
+      height: 100%;
+    }
+    
     > input {
       border: 1px solid rgb(219, 219, 219);
       border-radius: 22px;
-      padding: 16px 80px 16px 16px;
+      padding: 16px 80px 16px 45px;
       height: 100%;
       width: 100%;
     }
     
-    > button {
+    > div {
+      font-size: 14px;
+      position: absolute;
+      left: 16px;
+      line-height: 46px;
+      display: flex;
+      height: 100%;
+    }
+    
+    > #send-message {
       color: rgb(0, 149, 246);
       font-size: 14px;
       font-weight: 600;
-      position: absolute;
-      height: auto;
       right: 16px;
-      line-height: 46px;
     }
+  }
+`
+
+export const HeartMessageFromMe = styled.div`
+  display: flex;
+  justify-content: end;
+  > div {
+    width: 68.66px;
+    height: 62px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 50px !important;
+  }
+`
+
+export const HeartMessageFromYou = styled.div`
+  display: flex;
+  justify-content: start;
+
+  > a {
+    margin-top: auto;
+    margin-right: 8px;
+
+    > img {
+      width: 28px;
+      height: 28px;
+      object-fit: cover;
+    }
+  }
+  
+  > div {
+    width: 68.66px;
+    height: 62px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 50px !important;
+    margin-left: 37px;
+  }
+  
+  > span {
+    width: 68.66px;
+    height: 62px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 50px !important;
   }
 `
