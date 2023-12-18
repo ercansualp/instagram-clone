@@ -1,5 +1,11 @@
 import {useState, useEffect, useContext, useRef} from "react";
-import {NewMessageIcon, NoSelectedContactMessageIcon, VerifiedAccount} from "../../assets/img/svg";
+import {
+    HeartIcon,
+    NewMessageIcon,
+    NoSelectedContactMessageIcon,
+    SelectEmojiIcon,
+    VerifiedAccount
+} from "../../assets/img/svg";
 import DefaultProfilePicture from "../../assets/img/default_profile_picture.jpg"
 import {NavLink, useNavigate, useParams} from "react-router-dom";
 import axios from "axios";
@@ -7,6 +13,7 @@ import {authApi} from "../../url";
 import {Context} from "../../contexts/AuthContext";
 import * as Component from "./styled-components";
 import io from "socket.io-client";
+import EmojiPicker from "emoji-picker-react";
 
 const socket = io.connect("http://localhost:5000");
 
@@ -20,6 +27,8 @@ export default function Message() {
     const [userMessages, setUserMessages] = useState([]);
     const [isTyping, setIsTyping] = useState(false);
     const messageContainerRef = useRef(null);
+    const [showEmojies, setShowEmojies] = useState(false);
+    const [images, setImages] = useState([]);
 
     const GetUserMessages = async () => {
         const {data} = await axios.post(authApi, {
@@ -28,8 +37,8 @@ export default function Message() {
         });
         let newMessages = data.filter(i => i.username !== currentUser.username);
         const filteredMessages = [];
-        for(let i = 0; i < newMessages.length; i++) {
-            if(!filteredMessages.find(j => j.username === newMessages[i].username)) {
+        for (let i = 0; i < newMessages.length; i++) {
+            if (!filteredMessages.find(j => j.username === newMessages[i].username)) {
                 filteredMessages.push(newMessages[i]);
             }
         }
@@ -113,7 +122,7 @@ export default function Message() {
             })
             */
             console.log("userMessages", userMessages);
-            if(userMessages.length) {
+            if (userMessages.length) {
                 console.log("userMessages - 1", userMessages);
                 setUserMessages(prevUserMessages => {
                     prevUserMessages.find(i => i.username === message.message_sender).message_content = message.message_content;
@@ -165,16 +174,20 @@ export default function Message() {
                 message_content: message
             });
             if (messageContainerRef.current) {
-                messageContainerRef.current.scrollIntoView({ behavior: "smooth" });
+                messageContainerRef.current.scrollIntoView({behavior: "smooth"});
             }
             setMessage("");
-            if(userMessages.length) {
+            if (userMessages.length) {
                 const newUserMessages = [...userMessages];
                 newUserMessages.find(i => i.username === username).message_content = message;
                 newUserMessages.find(i => i.username === username).message_sender = currentUser.username;
                 setUserMessages(newUserMessages);
             }
-            socket.emit("typing_message", {message_sender: currentUser.username, message_replicent: username, typing: false});
+            socket.emit("typing_message", {
+                message_sender: currentUser.username,
+                message_replicent: username,
+                typing: false
+            });
 
             setTimeout(() => {
                 messageContainerRef.current?.scrollBy(0, messageContainerRef.current?.scrollHeight);
@@ -184,11 +197,75 @@ export default function Message() {
 
     const handleChange = (event) => {
         setMessage(event.target.value);
-        if(event.target.value) {
-            socket.emit("typing_message", {message_sender: currentUser.username, message_replicent: username, typing: true});
+        if (event.target.value) {
+            socket.emit("typing_message", {
+                message_sender: currentUser.username,
+                message_replicent: username,
+                typing: true
+            });
         } else {
-            socket.emit("typing_message", {message_sender: currentUser.username, message_replicent: username, typing: false});
+            socket.emit("typing_message", {
+                message_sender: currentUser.username,
+                message_replicent: username,
+                typing: false
+            });
         }
+    }
+
+    const handleShowEmojies = (event) => {
+        event.preventDefault();
+        setShowEmojies(!showEmojies);
+    }
+
+    const handleEmojiChange = (_emoji) => {
+        const {emoji} = _emoji;
+        console.log(_emoji);
+        setMessage(previousMessage => previousMessage + emoji);
+        socket.emit("typing_message", {
+            message_sender: currentUser.username,
+            message_replicent: username,
+            typing: true
+        });
+    }
+
+    const sendHeart = async () => {
+        await axios.post(authApi, {
+            actionType: "SendMessage",
+            data: {
+                message_sender: currentUser.username,
+                message_content: "❤️",
+                message_recipient: username
+            }
+        }).then(() => {
+            setMessages(prevMessages => [...prevMessages, {
+                message_sender: currentUser.username,
+                message_content: "❤️"
+            }]);
+            socket.emit("send_message", {
+                message_sender: currentUser.username,
+                message_replicent: username,
+                message_content: "❤️"
+            });
+            if (messageContainerRef.current) {
+                messageContainerRef.current.scrollIntoView({behavior: "smooth"});
+            }
+            setMessage("");
+            if (userMessages.length) {
+                const newUserMessages = [...userMessages];
+                newUserMessages.find(i => i.username === username).message_content = "❤️";
+                newUserMessages.find(i => i.username === username).message_sender = currentUser.username;
+                setUserMessages(newUserMessages);
+            }
+            socket.emit("typing_message", {
+                message_sender: currentUser.username,
+                message_replicent: username,
+                typing: false
+            });
+
+            setTimeout(() => {
+                messageContainerRef.current?.scrollBy(0, messageContainerRef.current?.scrollHeight);
+            }, 0);
+        });
     }
 
     return (
@@ -241,33 +318,67 @@ export default function Message() {
                                         messages.map((message, index, arr) => {
                                             const nextItem = arr[index + 1];
                                             if (message.message_sender === currentUser.username) {
-                                                return (
-                                                    <div className="message-from-me" key={index}>
-                                                        {message.message_content}
-                                                    </div>
-                                                )
-                                            } else {
-                                                if (nextItem && nextItem.message_sender === message.message_sender) {
+                                                if(message.message_content === "❤️") {
                                                     return (
-                                                        <div className="message-from-you" key={index}>
-                                                            <span
-                                                                style={{marginLeft: 37}}>{message.message_content}</span>
-                                                        </div>
+                                                        <Component.HeartMessageFromMe key={index}>
+                                                            <div>
+                                                                {message.message_content}
+                                                            </div>
+                                                        </Component.HeartMessageFromMe>
                                                     )
                                                 } else {
                                                     return (
-                                                        <div className="message-from-you" key={index}>
-                                                            <NavLink to={`/${username}`}>
-                                                                <img
-                                                                    src={user && user.picture || DefaultProfilePicture}
-                                                                    alt="" style={{
-                                                                    objectFit: "cover",
-                                                                    borderRadius: "50%"
-                                                                }}/>
-                                                            </NavLink>
-                                                            <span>{message.message_content}</span>
+                                                        <div className="message-from-me" key={index}>
+                                                            {message.message_content}
                                                         </div>
                                                     )
+                                                }
+                                            } else {
+                                                if (nextItem && nextItem.message_sender === message.message_sender) {
+                                                    if(message.message_content === "❤️") {
+                                                        return (
+                                                            <Component.HeartMessageFromYou key={index}>
+                                                                <div>{message.message_content}</div>
+                                                            </Component.HeartMessageFromYou>
+                                                        )
+                                                    } else {
+                                                        return (
+                                                            <div className="message-from-you" key={index}>
+                                                            <span
+                                                                style={{marginLeft: 37}}>{message.message_content}</span>
+                                                            </div>
+                                                        )
+                                                    }
+                                                } else {
+                                                    if(message.message_content === "❤️") {
+                                                        return (
+                                                            <Component.HeartMessageFromYou key={index}>
+                                                                <NavLink to={`/${username}`}>
+                                                                    <img
+                                                                        src={user && user.picture || DefaultProfilePicture}
+                                                                        alt="" style={{
+                                                                        objectFit: "cover",
+                                                                        borderRadius: "50%"
+                                                                    }}/>
+                                                                </NavLink>
+                                                                <span>{message.message_content}</span>
+                                                            </Component.HeartMessageFromYou>
+                                                        )
+                                                    } else {
+                                                        return (
+                                                            <div className="message-from-you" key={index}>
+                                                                <NavLink to={`/${username}`}>
+                                                                    <img
+                                                                        src={user && user.picture || DefaultProfilePicture}
+                                                                        alt="" style={{
+                                                                        objectFit: "cover",
+                                                                        borderRadius: "50%"
+                                                                    }}/>
+                                                                </NavLink>
+                                                                <span>{message.message_content}</span>
+                                                            </div>
+                                                        )
+                                                    }
                                                 }
                                             }
                                         })
@@ -288,12 +399,23 @@ export default function Message() {
                                         )
                                     }
                                 </div>
+                                {showEmojies && <EmojiPicker onEmojiClick={handleEmojiChange}/>}
                             </Component.ContactMessageContainer>
                             <Component.SendMessageContainer>
                                 <div>
+                                    <div>
+                                        <button onClick={handleShowEmojies}>
+                                            <SelectEmojiIcon />
+                                        </button>
+                                    </div>
                                     <input type="text" placeholder="Mesaj..." value={message}
                                            onChange={handleChange}/>
-                                    {message && <button onClick={sendMessage}>Gönder</button>}
+                                    {!message && (
+                                        <button id="send-heart" onClick={sendHeart}>
+                                            <HeartIcon />
+                                        </button>
+                                    )}
+                                    {message && <button onClick={sendMessage} id="send-message">Gönder</button>}
                                 </div>
                             </Component.SendMessageContainer>
                         </Component.SelectedContact>
