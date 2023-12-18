@@ -1,5 +1,7 @@
 import {useState, useEffect, useContext, useRef} from "react";
 import {
+    AddAnotherImageIcon, AddImageIcon,
+    CancelIcon,
     HeartIcon,
     NewMessageIcon,
     NoSelectedContactMessageIcon,
@@ -14,6 +16,8 @@ import {Context} from "../../contexts/AuthContext";
 import * as Component from "./styled-components";
 import io from "socket.io-client";
 import EmojiPicker from "emoji-picker-react";
+import PlayVıdeoIcon from "../../assets/img/play_24dp.png";
+import PlayButton from "../../assets/img/playButton.png";
 
 const socket = io.connect("http://localhost:5000");
 
@@ -22,13 +26,14 @@ export default function Message() {
     const {currentUser} = useContext(Context);
     const {username} = useParams();
     const [messages, setMessages] = useState([]);
-    const [message, setMessage] = useState(null);
+    const [message, setMessage] = useState("");
     const [user, setUser] = useState(undefined);
     const [userMessages, setUserMessages] = useState([]);
     const [isTyping, setIsTyping] = useState(false);
     const messageContainerRef = useRef(null);
     const [showEmojies, setShowEmojies] = useState(false);
-    const [images, setImages] = useState([]);
+    const [files, setFiles] = useState([]);
+    const [filesForPost, setFilesForPost] = useState([]);
 
     const GetUserMessages = async () => {
         const {data} = await axios.post(authApi, {
@@ -49,8 +54,7 @@ export default function Message() {
         GetUserMessages();
     }, [])
 
-    const startChat = (_username) => {
-        navigate("/direct/inbox/" + _username, {replace: true});
+    const startChat = (event, _username) => {
         socket.emit("join_room", {message_sender: currentUser.username, message_replicent: username});
     }
 
@@ -136,6 +140,7 @@ export default function Message() {
                 });
                 console.log("data", data)
                 console.log("2", [{...message, ...data}]);
+                console.log("mesaj", message);
                 setUserMessages([{...data, ...message}]);
             }
             setMessages(prevMessages => [...prevMessages, message])
@@ -161,22 +166,57 @@ export default function Message() {
             data: {
                 message_sender: currentUser.username,
                 message_content: message,
-                message_recipient: username
+                message_recipient: username,
+                message_type: "text"
             }
-        }).then(() => {
-            setMessages(prevMessages => [...prevMessages, {
-                message_sender: currentUser.username,
-                message_content: message
-            }]);
+        }).then(async () => {
+            if(message !== "") {
+                setMessages(prevMessages => [...prevMessages, {
+                    message_sender: currentUser.username,
+                    message_content: message,
+                    message_type: "text"
+                }]);
+            }
             socket.emit("send_message", {
                 message_sender: currentUser.username,
                 message_replicent: username,
                 message_content: message
             });
-            if (messageContainerRef.current) {
-                messageContainerRef.current.scrollIntoView({behavior: "smooth"});
+            for(let i = 0; i < filesForPost.length; i++) {
+                let formData = new FormData();
+                formData.append("image", filesForPost[i]);
+                const {data} = await axios.post('http://localhost/instagram-clone-revised/upload-message-file.php', formData, {
+                    headers: {
+                        'Content-Type': 'multipart/form-data'
+                    }
+                });
+                await axios.post(authApi, {
+                    actionType: "SendMessage",
+                    data: {
+                        message_sender: currentUser.username,
+                        message_content: data,
+                        message_recipient: username,
+                        message_type: filesForPost[i].type
+                    }
+                })
+            }
+            for(let i = 0; i < files.length; i++) {
+                console.log("files[i]", files[i]);
+                socket.emit("send_message", {
+                    message_sender: currentUser.username,
+                    message_replicent: username,
+                    message_content: files[i].file,
+                    message_type: files[i].type
+                });
+                setMessages(prevMessages => [...prevMessages, {
+                    message_sender: currentUser.username,
+                    message_content: files[i].file,
+                    message_type: files[i].type
+                }]);
             }
             setMessage("");
+            setFiles([]);
+            setFilesForPost([]);
             if (userMessages.length) {
                 const newUserMessages = [...userMessages];
                 newUserMessages.find(i => i.username === username).message_content = message;
@@ -229,14 +269,15 @@ export default function Message() {
     }
 
     const sendHeart = async () => {
-        await axios.post(authApi, {
-            actionType: "SendMessage",
-            data: {
-                message_sender: currentUser.username,
-                message_content: "❤️",
-                message_recipient: username
-            }
-        }).then(() => {
+        try {
+            await axios.post(authApi, {
+                actionType: "SendMessage",
+                data: {
+                    message_sender: currentUser.username,
+                    message_content: "❤️",
+                    message_recipient: username
+                }
+            })
             setMessages(prevMessages => [...prevMessages, {
                 message_sender: currentUser.username,
                 message_content: "❤️"
@@ -246,9 +287,6 @@ export default function Message() {
                 message_replicent: username,
                 message_content: "❤️"
             });
-            if (messageContainerRef.current) {
-                messageContainerRef.current.scrollIntoView({behavior: "smooth"});
-            }
             setMessage("");
             if (userMessages.length) {
                 const newUserMessages = [...userMessages];
@@ -265,8 +303,40 @@ export default function Message() {
             setTimeout(() => {
                 messageContainerRef.current?.scrollBy(0, messageContainerRef.current?.scrollHeight);
             }, 0);
-        });
+        } catch (error) {
+
+        }
     }
+
+    const addImages = async (event) => {
+        const { files } = event.target;
+        const _files = [];
+
+        // FileReader işlemlerini promisify eden bir yardımcı fonksiyon
+        const readFile = (file) => {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => resolve({ type: file.type, file: reader.result });
+                reader.onerror = (error) => reject(error);
+            });
+        };
+
+        // FileReader işlemlerini asenkron olarak gerçekleştir
+        for (let i = 0; i < files.length; i++) {
+            try {
+                const result = await readFile(files[i]);
+                _files.push(result);
+            } catch (error) {
+                console.error("Error reading file:", error);
+                // Hata durumunda isteğe bağlı olarak bir şeyler yapabilirsiniz.
+            }
+        }
+
+        // FileReader işlemleri tamamlandıktan sonra state'i güncelle
+        setFilesForPost(files);
+        setFiles(prevFiles => [...prevFiles, ..._files])
+    };
 
     return (
         <Component.Container>
@@ -278,14 +348,24 @@ export default function Message() {
                 <Component.Contacts>
                     {
                         userMessages.map((message, index) => (
-                            <div onClick={() => startChat(message.username)} className="contact" key={index}>
+                            <NavLink
+                                to={`/direct/inbox/${message.username}`}
+                                onClick={(e) => startChat(e, message.username)}
+                                className="contact"
+                                key={index}
+                                style={({isActive}) => {
+                                    return {
+                                        backgroundColor: isActive ? "rgb(239, 239, 239)" : "white",
+                                    };
+                                }}
+                            >
                                 <img src={message.picture || DefaultProfilePicture} alt=""
                                      style={{width: 56, height: 56, borderRadius: "50%", objectFit: "cover"}}/>
                                 <div className="contact-info">
                                     <span>{message.name}</span>
                                     <p>{message.message_sender === currentUser.username && "Sen: "}{message.message_content.length > 30 ? message.message_content.slice(0, 94) + "..." : message.message_content}</p>
                                 </div>
-                            </div>
+                            </NavLink>
                         ))
                     }
                 </Component.Contacts>
@@ -318,13 +398,36 @@ export default function Message() {
                                         messages.map((message, index, arr) => {
                                             const nextItem = arr[index + 1];
                                             if (message.message_sender === currentUser.username) {
-                                                if(message.message_content === "❤️") {
+                                                if (message.message_content === "❤️") {
                                                     return (
                                                         <Component.HeartMessageFromMe key={index}>
                                                             <div>
                                                                 {message.message_content}
                                                             </div>
                                                         </Component.HeartMessageFromMe>
+                                                    )
+                                                } else if (message.message_type === "video/mp4") {
+                                                    return (
+                                                        <Component.VideoMessageFromMe key={index}>
+                                                            <video preload="metadata" autoPlay={false}>
+                                                                <source
+                                                                    src={message.message_content}
+                                                                    type="video/mp4"/>
+                                                            </video>
+                                                            <span id="play-video-img">
+                                                                            <img src={PlayButton} alt=""/>
+                                                                        </span>
+                                                        </Component.VideoMessageFromMe>
+                                                    )
+                                                } else if (
+                                                    message.message_type === "image/jpg" ||
+                                                    message.message_type === "image/png" ||
+                                                    message.message_type === "image/jpeg"
+                                                ) {
+                                                    return (
+                                                        <Component.PhotoMessageFromMe key={index}>
+                                                            <img src={message.message_content} alt=""/>
+                                                        </Component.PhotoMessageFromMe>
                                                     )
                                                 } else {
                                                     return (
@@ -335,11 +438,23 @@ export default function Message() {
                                                 }
                                             } else {
                                                 if (nextItem && nextItem.message_sender === message.message_sender) {
-                                                    if(message.message_content === "❤️") {
+                                                    if (message.message_content === "❤️") {
                                                         return (
                                                             <Component.HeartMessageFromYou key={index}>
                                                                 <div>{message.message_content}</div>
                                                             </Component.HeartMessageFromYou>
+                                                        )
+                                                    } else if (message.message_type === "video/mp4") {
+
+                                                    } else if (
+                                                        message.message_type === "image/jpg" ||
+                                                        message.message_type === "image/png" ||
+                                                        message.message_type === "image/jpeg"
+                                                    ) {
+                                                        return (
+                                                            <Component.PhotoMessageFromYou key={index}>
+                                                                <img className="message-img" src={message.message_content} alt="" style={{marginLeft: 37}}/>
+                                                            </Component.PhotoMessageFromYou>
                                                         )
                                                     } else {
                                                         return (
@@ -350,7 +465,7 @@ export default function Message() {
                                                         )
                                                     }
                                                 } else {
-                                                    if(message.message_content === "❤️") {
+                                                    if (message.message_content === "❤️") {
                                                         return (
                                                             <Component.HeartMessageFromYou key={index}>
                                                                 <NavLink to={`/${username}`}>
@@ -363,6 +478,26 @@ export default function Message() {
                                                                 </NavLink>
                                                                 <span>{message.message_content}</span>
                                                             </Component.HeartMessageFromYou>
+                                                        )
+                                                    } else if (message.message_type === "video/mp4") {
+
+                                                    } else if (
+                                                        message.message_type === "image/jpg" ||
+                                                        message.message_type === "image/png" ||
+                                                        message.message_type === "image/jpeg"
+                                                    ) {
+                                                        return (
+                                                            <Component.PhotoMessageFromYou key={index}>
+                                                                <NavLink to={`/${username}`}>
+                                                                    <img
+                                                                        src={user && user.picture || DefaultProfilePicture}
+                                                                        alt="" style={{
+                                                                        objectFit: "cover",
+                                                                        borderRadius: "50%"
+                                                                    }}/>
+                                                                </NavLink>
+                                                                <img className="message-img" src={message.message_content} alt=""/>
+                                                            </Component.PhotoMessageFromYou>
                                                         )
                                                     } else {
                                                         return (
@@ -399,23 +534,71 @@ export default function Message() {
                                         )
                                     }
                                 </div>
-                                {showEmojies && <EmojiPicker onEmojiClick={handleEmojiChange}/>}
+                                <div id="emoji-picker">
+                                    {showEmojies &&
+                                        <EmojiPicker onEmojiClick={handleEmojiChange} emojiStyle="twitter"/>}
+                                </div>
                             </Component.ContactMessageContainer>
-                            <Component.SendMessageContainer>
-                                <div>
-                                    <div>
-                                        <button onClick={handleShowEmojies}>
-                                            <SelectEmojiIcon />
-                                        </button>
-                                    </div>
+                            <Component.SendMessageContainer style={{height: files.length === 0 ? 78 : 200}}>
+                                <div style={{height: files.length === 0 ? 58 : 137}}>
+                                    <button id="select-emoji-btn" onClick={handleShowEmojies}>
+                                        <SelectEmojiIcon/>
+                                    </button>
+                                    {
+                                        files.length !== 0 && (
+                                            <Component.ImagesWrapper>
+                                                <div>
+                                                    {
+                                                        files.map((file, index) => (
+                                                            <div className="image-wrapper" key={index}>
+                                                                {
+                                                                    file.type === "video/mp4" ? (
+                                                                        <>
+                                                                            <video preload="metadata" autoPlay={false}>
+                                                                                <source
+                                                                                    src={file.file}
+                                                                                    type="video/mp4"/>
+                                                                            </video>
+                                                                            <span id="play-video-img">
+                                                                                <img src={PlayVıdeoIcon} alt=""/>
+                                                                            </span>
+                                                                        </>
+                                                                    ) : <img src={file.file} alt=""/>
+                                                                }
+                                                                <div>
+                                                                    <button onClick={() => setFiles(files.filter((f, i) => i !== index))}><CancelIcon/></button>
+                                                                </div>
+                                                            </div>
+                                                        ))
+                                                    }
+                                                    <div id="add-more-image">
+                                                        <label>
+                                                            <input type="file" multiple onChange={addImages} accept="image/png, video/mp4, image/jpeg" />
+                                                            <AddAnotherImageIcon/>
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            </Component.ImagesWrapper>
+                                        )
+                                    }
                                     <input type="text" placeholder="Mesaj..." value={message}
-                                           onChange={handleChange}/>
-                                    {!message && (
-                                        <button id="send-heart" onClick={sendHeart}>
-                                            <HeartIcon />
-                                        </button>
+                                           onChange={handleChange} style={{
+                                        borderRadius: files.length === 0 ? 22 : "0 0 22px 22px",
+                                        borderTopWidth: files.length === 0 ? 1 : 0
+                                    }}/>
+                                    {!message && files.length === 0 && (
+                                        <>
+                                            <label id="add-image">
+                                                <input type="file" style={{display: "none"}} multiple accept="image/png, video/mp4, image/jpeg"
+                                                       onChange={addImages}/>
+                                                <AddImageIcon/>
+                                            </label>
+                                            <button id="send-heart" onClick={sendHeart}>
+                                                <HeartIcon/>
+                                            </button>
+                                        </>
                                     )}
-                                    {message && <button onClick={sendMessage} id="send-message">Gönder</button>}
+                                    {message !== "" || files.length !== 0 ? <button onClick={sendMessage} id="send-message">Gönder</button> : ""}
                                 </div>
                             </Component.SendMessageContainer>
                         </Component.SelectedContact>
