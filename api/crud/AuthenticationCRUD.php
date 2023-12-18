@@ -215,8 +215,8 @@ class AuthenticationCRUD
     {
         self::initialize();
 
-        $sendMessageQuery = "INSERT INTO messages (message_sender, message_recipient, message_content) VALUES (?, ?, ?)";
-        $sendMessageQueryParams = array($data["message_sender"], $data["message_recipient"], $data["message_content"]);
+        $sendMessageQuery = "INSERT INTO messages (message_sender, message_recipient, message_content, message_type) VALUES (?, ?, ?, ?)";
+        $sendMessageQueryParams = array($data["message_sender"], $data["message_recipient"], $data["message_content"], $data["message_type"]);
 
         $result = self::$conn->Fetch($sendMessageQuery, $sendMessageQueryParams);
 
