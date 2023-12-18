@@ -29,7 +29,7 @@ export const Sidebar = styled.div`
 export const Contacts = styled.div`
   overflow-y: auto;
 
-  > div {
+  > a {
     padding: 8px 24px;
     height: 72px;
     cursor: pointer;
@@ -70,6 +70,7 @@ export const Contacts = styled.div`
 
 export const MessageContainer = styled.div`
   flex-grow: 1;
+  overflow-y: hidden;
 `
 
 export const NoSelectedContact = styled.div`
@@ -152,10 +153,13 @@ export const ContactMessageContainer = styled.div`
   display: flex;
   flex-direction: column;
 
-  > aside {
-    position: absolute !important;
-    bottom: 62px;
-    left: 16px;
+  > #emoji-picker {
+    z-index: 999;
+    > aside {
+      position: absolute !important;
+      bottom: 62px;
+      left: 16px;
+    }
   }
 
   > div#header {
@@ -281,9 +285,163 @@ export const ContactMessageContainer = styled.div`
   }
 `
 
+export const VideoMessageFromMe = styled.div`
+  margin-left: auto !important;
+  max-height: 340px;
+  max-width: 236px;
+  position: relative;
+  cursor: pointer;
+  
+  > video {
+    display: block;
+    max-height: 340px;
+    max-width: 200px;
+    width: 100%;
+    height: 100%;
+    border-radius: 22px 4px 4px 22px;
+  }
+  
+  > span {
+    position: absolute;
+    right: 0;
+    top: 0;
+    > img {
+      width: 45px;
+      height: 45px;
+      color: black;
+    }
+  }
+`
+
+export const PhotoMessageFromYou = styled.div`
+  display: flex;
+  max-height: 340px;
+  max-width: 236px;
+  cursor: pointer;
+
+  > a {
+    margin-top: auto;
+    margin-right: 8px;
+    > img {
+      width: 28px;
+      height: 28px;
+      object-fit: cover;
+    }
+  }
+  
+  > .message-img {
+    display: block;
+    max-height: 340px;
+    max-width: 200px;
+    width: 100%;
+    height: 100%;
+    border-radius: 4px 22px 22px 4px;
+  }
+`
+
+export const PhotoMessageFromMe = styled.div`  
+  margin-left: auto !important;
+  max-height: 340px;
+  max-width: 236px;
+  cursor: pointer;
+  
+  > img {
+    display: block;
+    max-height: 340px;
+    max-width: 200px;
+    width: 100%;
+    height: 100%;
+    border-radius: 22px 4px 4px 22px;
+  }
+`
+
+export const ImagesWrapper = styled.span`
+  height: 80px;
+  border-color: #ddd;
+  border-width: 1px 1px 0;
+  border-style: solid;
+  width: 100%;
+  border-radius: 22px 22px 0 0;
+  display: block;
+  max-width: 1154px;
+  overflow-x: auto;
+  overflow-y: hidden;
+
+  > div {
+    display: flex;
+    width: 100%;
+    padding: 12px;
+    gap: 12px;
+    
+    > div {
+      min-width: 48px;
+      min-height: 48px;
+      width: 48px;
+      height: 48px;
+    }
+  }
+
+  > div {
+    > #add-more-image {
+      padding: 8px;
+      background-color: rgba(134, 142, 153, 0.25);
+      border-radius: 10px;
+
+      > label {
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        width: 100%;
+
+        > input {
+          display: none;
+        }
+      }
+    }
+  }
+
+  > div {
+    > div.image-wrapper {
+      margin: 2px 0 6px 0;
+      position: relative;
+
+      > #play-video-img {
+        width: 100%;
+        height: 100%;
+        display: block;
+        position: absolute;
+        top: 0;
+        > img {
+          width: 24px;
+          height: 24px;
+          position: absolute;
+          top: 12.5px;
+          left: 12.5px;
+        }
+      }
+
+      > img, video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 10px;
+      }
+
+      > div {
+        width: 34px;
+        height: 34px;
+        padding: 8px;
+        position: absolute;
+        top: -16px;
+        right: -16px;
+      }
+    }
+  }
+`
+
 export const SendMessageContainer = styled.div`
-  min-height: 78px;
-  height: 78px;
   padding: 16px;
   position: relative;
   
@@ -296,28 +454,30 @@ export const SendMessageContainer = styled.div`
       position: absolute;
     }
     
+    > #add-image {
+      font-size: 14px;
+      right: 56px;
+      bottom: 16px;
+      position: absolute;
+      cursor: pointer;
+    }
+    
     > #send-heart {
-      color: red;
       font-size: 14px;
       right: 16px;
-      height: 100%;
+      bottom: 16px
     }
     
     > input {
       border: 1px solid rgb(219, 219, 219);
-      border-radius: 22px;
       padding: 16px 80px 16px 45px;
-      height: 100%;
       width: 100%;
     }
     
-    > div {
-      font-size: 14px;
+    > #select-emoji-btn {
       position: absolute;
       left: 16px;
-      line-height: 46px;
-      display: flex;
-      height: 100%;
+      bottom: 16px;
     }
     
     > #send-message {
@@ -325,6 +485,7 @@ export const SendMessageContainer = styled.div`
       font-size: 14px;
       font-weight: 600;
       right: 16px;
+      line-height: 58px;
     }
   }
 `
