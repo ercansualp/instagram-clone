@@ -3,11 +3,12 @@ FROM node:14-alpine
 WORKDIR /app
  
 COPY package*.json ./
- 
-RUN npm install
- 
+
+RUN npm i -g pnpm 
+RUN pnpm install
+
 COPY . .
  
 EXPOSE 3000
  
-CMD ["npm", "start"]
+CMD ["pnpm", "start"]
