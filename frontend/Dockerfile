@@ -9,5 +9,8 @@ RUN npm install
 COPY . .
  
 EXPOSE 3000
+
+# "node" kullanıcısını ve "node" grubunu kullanarak çalıştır
+USER node
  
 CMD ["npm", "start"]
