@@ -4,7 +4,8 @@ WORKDIR /app
  
 COPY package*.json ./
 
-RUN npm install
+RUN sudo npm install -g yarn
+RUN yarn install
 
 COPY . .
  
@@ -13,4 +14,4 @@ EXPOSE 3000
 # "node" kullanıcısını ve "node" grubunu kullanarak çalıştır
 USER node
  
-CMD ["npm", "start"]
+CMD ["yarn", "run"]
