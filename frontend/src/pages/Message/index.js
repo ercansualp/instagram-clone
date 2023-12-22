@@ -18,6 +18,7 @@ import io from "socket.io-client";
 import EmojiPicker from "emoji-picker-react";
 import PlayVıdeoIcon from "../../assets/img/play_24dp.png";
 import PlayButton from "../../assets/img/playButton.png";
+import MessageFile from "./components/MessageFile";
 
 const socket = io.connect("http://localhost:5000");
 
@@ -34,6 +35,8 @@ export default function Message() {
     const [showEmojies, setShowEmojies] = useState(false);
     const [files, setFiles] = useState([]);
     const [filesForPost, setFilesForPost] = useState([]);
+    const [messageFile, setMessageFile] = useState(null);
+    const [showMessageFile, setShowMessageFile] = useState(false);
 
     const GetUserMessages = async () => {
         const {data} = await axios.post(authApi, {
@@ -103,6 +106,7 @@ export default function Message() {
 
     useEffect(() => {
         socket.on("receive_message", async (message) => {
+            console.log(message)
             /*
             setUserMessages(async (prevUserMessages) => {
                 console.log("1");
@@ -125,22 +129,16 @@ export default function Message() {
                 }
             })
             */
-            console.log("userMessages", userMessages);
             if (userMessages.length) {
-                console.log("userMessages - 1", userMessages);
                 setUserMessages(prevUserMessages => {
                     prevUserMessages.find(i => i.username === message.message_sender).message_content = message.message_content;
                     return prevUserMessages;
                 });
             } else {
-                console.log("userMessages - 2", userMessages);
                 const {data} = await axios.post(authApi, {
                     actionType: "GetUser",
                     uid: message.message_sender
                 });
-                console.log("data", data)
-                console.log("2", [{...message, ...data}]);
-                console.log("mesaj", message);
                 setUserMessages([{...data, ...message}]);
             }
             setMessages(prevMessages => [...prevMessages, message])
@@ -161,16 +159,8 @@ export default function Message() {
 
     const sendMessage = async (event) => {
         event.preventDefault();
-        await axios.post(authApi, {
-            actionType: "SendMessage",
-            data: {
-                message_sender: currentUser.username,
-                message_content: message,
-                message_recipient: username,
-                message_type: "text"
-            }
-        }).then(async () => {
-            if(message !== "") {
+        try {
+            if (message !== "" && message !== null && message !== undefined) {
                 setMessages(prevMessages => [...prevMessages, {
                     message_sender: currentUser.username,
                     message_content: message,
@@ -182,32 +172,35 @@ export default function Message() {
                 message_replicent: username,
                 message_content: message
             });
-            for(let i = 0; i < filesForPost.length; i++) {
+            for (let i = 0; i < filesForPost.length; i++) {
                 let formData = new FormData();
                 formData.append("image", filesForPost[i]);
-                const {data} = await axios.post('http://localhost/instagram-clone-revised/upload-message-file.php', formData, {
-                    headers: {
-                        'Content-Type': 'multipart/form-data'
-                    }
-                });
-                await axios.post(authApi, {
-                    actionType: "SendMessage",
-                    data: {
+                try {
+                    const {data} = await axios.post('http://localhost/instagram-clone-revised/upload-message-file.php', formData, {
+                        headers: {
+                            'Content-Type': 'multipart/form-data'
+                        }
+                    });
+                    await axios.post(authApi, {
+                        actionType: "SendMessage",
+                        data: {
+                            message_sender: currentUser.username,
+                            message_content: data,
+                            message_recipient: username,
+                            message_type: filesForPost[i].type
+                        }
+                    })
+                    socket.emit("send_message", {
                         message_sender: currentUser.username,
+                        message_replicent: username,
+                        message_type: files[i].type,
                         message_content: data,
-                        message_recipient: username,
-                        message_type: filesForPost[i].type
-                    }
-                })
+                    });
+                } catch (error) {
+
+                }
             }
-            for(let i = 0; i < files.length; i++) {
-                console.log("files[i]", files[i]);
-                socket.emit("send_message", {
-                    message_sender: currentUser.username,
-                    message_replicent: username,
-                    message_content: files[i].file,
-                    message_type: files[i].type
-                });
+            for (let i = 0; i < files.length; i++) {
                 setMessages(prevMessages => [...prevMessages, {
                     message_sender: currentUser.username,
                     message_content: files[i].file,
@@ -232,7 +225,9 @@ export default function Message() {
             setTimeout(() => {
                 messageContainerRef.current?.scrollBy(0, messageContainerRef.current?.scrollHeight);
             }, 0);
-        });
+        } catch (error) {
+
+        }
     }
 
     const handleChange = (event) => {
@@ -259,7 +254,6 @@ export default function Message() {
 
     const handleEmojiChange = (_emoji) => {
         const {emoji} = _emoji;
-        console.log(_emoji);
         setMessage(previousMessage => previousMessage + emoji);
         socket.emit("typing_message", {
             message_sender: currentUser.username,
@@ -309,7 +303,7 @@ export default function Message() {
     }
 
     const addImages = async (event) => {
-        const { files } = event.target;
+        const {files} = event.target;
         const _files = [];
 
         // FileReader işlemlerini promisify eden bir yardımcı fonksiyon
@@ -317,7 +311,7 @@ export default function Message() {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
                 reader.readAsDataURL(file);
-                reader.onload = () => resolve({ type: file.type, file: reader.result });
+                reader.onload = () => resolve({type: file.type, file: reader.result});
                 reader.onerror = (error) => reject(error);
             });
         };
@@ -337,6 +331,11 @@ export default function Message() {
         setFilesForPost(files);
         setFiles(prevFiles => [...prevFiles, ..._files])
     };
+
+    const handleShowMessageFile = (messageFile) => {
+        setMessageFile(messageFile)
+        setShowMessageFile(true);
+    }
 
     return (
         <Component.Container>
@@ -408,7 +407,8 @@ export default function Message() {
                                                     )
                                                 } else if (message.message_type === "video/mp4") {
                                                     return (
-                                                        <Component.VideoMessageFromMe key={index}>
+                                                        <Component.VideoMessageFromMe key={index}
+                                                                                      onClick={() => handleShowMessageFile(message)}>
                                                             <video preload="metadata" autoPlay={false}>
                                                                 <source
                                                                     src={message.message_content}
@@ -425,7 +425,8 @@ export default function Message() {
                                                     message.message_type === "image/jpeg"
                                                 ) {
                                                     return (
-                                                        <Component.PhotoMessageFromMe key={index}>
+                                                        <Component.PhotoMessageFromMe key={index}
+                                                                                      onClick={() => handleShowMessageFile(message)}>
                                                             <img src={message.message_content} alt=""/>
                                                         </Component.PhotoMessageFromMe>
                                                     )
@@ -445,15 +446,33 @@ export default function Message() {
                                                             </Component.HeartMessageFromYou>
                                                         )
                                                     } else if (message.message_type === "video/mp4") {
-
+                                                        return (
+                                                            <Component.VideoMessageFromYou
+                                                                style={{marginLeft:37}}
+                                                                key={index}
+                                                               onClick={() => handleShowMessageFile(message)}
+                                                            >
+                                                                <video preload="metadata" autoPlay={false}>
+                                                                    <source src={message.message_content} type="video/mp4"/>
+                                                                </video>
+                                                                <span id="play-video-img">
+                                                                    <img src={PlayButton} alt=""/>
+                                                                </span>
+                                                            </Component.VideoMessageFromYou>
+                                                        )
                                                     } else if (
                                                         message.message_type === "image/jpg" ||
                                                         message.message_type === "image/png" ||
                                                         message.message_type === "image/jpeg"
                                                     ) {
                                                         return (
-                                                            <Component.PhotoMessageFromYou key={index}>
-                                                                <img className="message-img" src={message.message_content} alt="" style={{marginLeft: 37}}/>
+                                                            <Component.PhotoMessageFromYou
+                                                                key={index}
+                                                                onClick={() => handleShowMessageFile(message)}
+                                                            >
+                                                                <img className="message-img"
+                                                                     src={message.message_content} alt=""
+                                                                     style={{marginLeft: 37}}/>
                                                             </Component.PhotoMessageFromYou>
                                                         )
                                                     } else {
@@ -480,14 +499,9 @@ export default function Message() {
                                                             </Component.HeartMessageFromYou>
                                                         )
                                                     } else if (message.message_type === "video/mp4") {
-
-                                                    } else if (
-                                                        message.message_type === "image/jpg" ||
-                                                        message.message_type === "image/png" ||
-                                                        message.message_type === "image/jpeg"
-                                                    ) {
                                                         return (
-                                                            <Component.PhotoMessageFromYou key={index}>
+                                                            <Component.VideoMessageFromYou key={index}
+                                                                                           onClick={() => handleShowMessageFile(message)}>
                                                                 <NavLink to={`/${username}`}>
                                                                     <img
                                                                         src={user && user.picture || DefaultProfilePicture}
@@ -496,7 +510,34 @@ export default function Message() {
                                                                         borderRadius: "50%"
                                                                     }}/>
                                                                 </NavLink>
-                                                                <img className="message-img" src={message.message_content} alt=""/>
+                                                                <video preload="metadata" autoPlay={false}>
+                                                                    <source
+                                                                        src={message.message_content}
+                                                                        type="video/mp4"/>
+                                                                </video>
+                                                                <span id="play-video-img">
+                                                                            <img src={PlayButton} alt=""/>
+                                                                        </span>
+                                                            </Component.VideoMessageFromYou>
+                                                        )
+                                                    } else if (
+                                                        message.message_type === "image/jpg" ||
+                                                        message.message_type === "image/png" ||
+                                                        message.message_type === "image/jpeg"
+                                                    ) {
+                                                        return (
+                                                            <Component.PhotoMessageFromYou key={index}
+                                                                                           onClick={() => handleShowMessageFile(message)}>
+                                                                <NavLink to={`/${username}`}>
+                                                                    <img
+                                                                        src={user && user.picture || DefaultProfilePicture}
+                                                                        alt="" style={{
+                                                                        objectFit: "cover",
+                                                                        borderRadius: "50%"
+                                                                    }}/>
+                                                                </NavLink>
+                                                                <img className="message-img"
+                                                                     src={message.message_content} alt=""/>
                                                             </Component.PhotoMessageFromYou>
                                                         )
                                                     } else {
@@ -566,14 +607,17 @@ export default function Message() {
                                                                     ) : <img src={file.file} alt=""/>
                                                                 }
                                                                 <div>
-                                                                    <button onClick={() => setFiles(files.filter((f, i) => i !== index))}><CancelIcon/></button>
+                                                                    <button
+                                                                        onClick={() => setFiles(files.filter((f, i) => i !== index))}>
+                                                                        <CancelIcon/></button>
                                                                 </div>
                                                             </div>
                                                         ))
                                                     }
                                                     <div id="add-more-image">
                                                         <label>
-                                                            <input type="file" multiple onChange={addImages} accept="image/png, video/mp4, image/jpeg" />
+                                                            <input type="file" multiple onChange={addImages}
+                                                                   accept="image/png, video/mp4, image/jpeg"/>
                                                             <AddAnotherImageIcon/>
                                                         </label>
                                                     </div>
@@ -589,7 +633,8 @@ export default function Message() {
                                     {!message && files.length === 0 && (
                                         <>
                                             <label id="add-image">
-                                                <input type="file" style={{display: "none"}} multiple accept="image/png, video/mp4, image/jpeg"
+                                                <input type="file" style={{display: "none"}} multiple
+                                                       accept="image/png, video/mp4, image/jpeg"
                                                        onChange={addImages}/>
                                                 <AddImageIcon/>
                                             </label>
@@ -598,7 +643,8 @@ export default function Message() {
                                             </button>
                                         </>
                                     )}
-                                    {message !== "" || files.length !== 0 ? <button onClick={sendMessage} id="send-message">Gönder</button> : ""}
+                                    {message !== "" || files.length !== 0 ?
+                                        <button onClick={sendMessage} id="send-message">Gönder</button> : ""}
                                 </div>
                             </Component.SendMessageContainer>
                         </Component.SelectedContact>
@@ -616,6 +662,8 @@ export default function Message() {
                     )
                 }
             </Component.MessageContainer>
+            {showMessageFile &&
+                <MessageFile messageFile={messageFile} open={showMessageFile} setOpen={setShowMessageFile}/>}
         </Component.Container>
     )
 }

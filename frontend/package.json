@@ -5,14 +5,9 @@
   "dependencies": {
     "@emotion/react": "^11.11.1",
     "@emotion/styled": "^11.11.0",
-    "@fontsource/roboto": "^5.0.8",
-    "@mui/icons-material": "^5.14.16",
     "@mui/material": "^5.14.16",
     "@mui/styled-engine-sc": "^6.0.0-alpha.4",
     "@szhsin/react-menu": "^4.1.0",
-    "@testing-library/jest-dom": "^5.17.0",
-    "@testing-library/react": "^13.4.0",
-    "@testing-library/user-event": "^13.5.0",
     "axios": "^1.6.0",
     "emoji-picker-react": "^4.5.16",
     "firebase": "^10.5.2",
@@ -49,8 +44,5 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
-  },
-  "devDependencies": {
-    "tailwindcss": "^3.3.5"
   }
 }

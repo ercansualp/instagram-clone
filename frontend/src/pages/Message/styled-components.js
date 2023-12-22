@@ -339,6 +339,44 @@ export const PhotoMessageFromYou = styled.div`
   }
 `
 
+export const VideoMessageFromYou = styled.div`
+  display: flex;
+  max-height: 340px;
+  max-width: 236px;
+  position: relative;
+  cursor: pointer;
+
+  > a {
+    margin-top: auto;
+    margin-right: 8px;
+    > img {
+      width: 28px;
+      height: 28px;
+      object-fit: cover;
+    }
+  }
+
+  > video {
+    display: block;
+    max-height: 340px;
+    max-width: 200px;
+    width: 100%;
+    height: 100%;
+    border-radius: 4px 22px 22px 4px;
+  }
+
+  > span {
+    position: absolute;
+    right: 45px;
+    top: 0;
+    > img {
+      width: 45px;
+      height: 45px;
+      color: black;
+    }
+  }
+`
+
 export const PhotoMessageFromMe = styled.div`  
   margin-left: auto !important;
   max-height: 340px;
