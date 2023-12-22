@@ -4,7 +4,7 @@ WORKDIR /app
  
 COPY package*.json ./
 
-RUN sudo npm install -g yarn
+RUN npm install -g yarn
 RUN yarn install
 
 COPY . .
