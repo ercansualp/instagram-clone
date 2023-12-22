@@ -1,16 +1,13 @@
-FROM node:14-alpine
- 
+FROM node:18-alpine
+
 WORKDIR /app
- 
+
 COPY package*.json ./
 
-RUN yarn install
+RUN yarn install --ignore-engines
 
 COPY . .
- 
+
 EXPOSE 3000
 
-# "node" kullanıcısını ve "node" grubunu kullanarak çalıştır
-USER node
- 
-CMD ["yarn", "run"]
+CMD ["yarn", "start"]
