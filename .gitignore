@@ -22,6 +22,8 @@ build
 .idea
 yedek
 nodejs
+/frontend/src/url.js
+
 
 # files
 InstagramDb.db
